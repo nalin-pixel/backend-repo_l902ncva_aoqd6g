@@ -1,48 +1,61 @@
 """
-Database Schemas
+Database Schemas for Digital Plant Growth & Care System
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to a MongoDB collection. The collection name is the lowercase
+of the class name.
 """
-
+from typing import List, Optional
 from pydantic import BaseModel, Field
-from typing import Optional
+from datetime import datetime
 
-# Example schemas (replace with your own):
+# Users
+class Users(BaseModel):
+    name: str
+    email: str
+    xp: int = 0
+    level: int = 1
+    streak: int = 0
+    badges: List[str] = Field(default_factory=list)
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+# PlantTemplates (preloaded species)
+class Planttemplates(BaseModel):
+    template_name: str
+    scientific_name: Optional[str] = None
+    ideal_moisture: int = Field(ge=0, le=100)
+    ideal_light: int = Field(ge=0, le=100)
+    ideal_temperature: int = Field(ge=0, le=60)
+    growth_days: int = Field(ge=1, le=3650)
+    instructions: Optional[str] = None
+    example_images: List[str] = Field(default_factory=list)
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+# UserPlants
+class Userplants(BaseModel):
+    owner: str = Field(..., description="User id")
+    template: str = Field(..., description="Plant template id")
+    nickname: str
+    planted_on: datetime
+    growth_points: int = 0
+    hydration: int = Field(0, ge=0, le=100)
+    nutrition: int = Field(0, ge=0, le=100)
+    sunlight: int = Field(0, ge=0, le=100)
+    health_score: int = Field(100, ge=0, le=100)
+    stage: str = Field("seed", description="seed|sprout|juvenile|mature")
+    last_action_date: Optional[datetime] = None
+    action_log: List[dict] = Field(default_factory=list)
 
-# Add your own schemas here:
-# --------------------------------------------------
+# Actions
+class Actions(BaseModel):
+    plant: str
+    type: str = Field(..., description="water|fertilize|trim|repot|sunlight_add")
+    value: int
+    xp_reward: int = 0
+    date: datetime
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+# SensorData (future IoT)
+class Sensordata(BaseModel):
+    plant: str
+    moisture: Optional[float] = None
+    temperature: Optional[float] = None
+    humidity: Optional[float] = None
+    light: Optional[float] = None
+    timestamp: datetime
